@@ -1,2 +1,3 @@
 # segtrees
 Several translations of segment trees for CMU's 15-451 (Algorithms).
+Feel free to contact me at abigalek@andrew.cmu.edu for questions/comments. Thanks!
