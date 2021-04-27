@@ -13,20 +13,20 @@
 
 /**** HELPER FUNCTIONS ****/
 // Returns the smallest power of 2 greater than or equal to n
-int SuperCeiling(int n) {
-    int p;
+size_t SuperCeiling(size_t n) {
+    size_t p;
     for (p=1; p < n; p = p << 1);
     return p;
 }
 
 // Maximum/minimum functions
-int max (int a, int b) {return (a>b)? a: b;}
-int min (int a, int b) {return (a<b)? a: b;}
+size_t max (size_t a, size_t b) {return (a>b)? a: b;}
+size_t min (size_t a, size_t b) {return (a<b)? a: b;}
 
 // Segment tree specific helpers
-int Parent(int i) {return i/2;}
-int LeftChild(int i) {return 2*i;}
-int RightChild(int i) {return 2*i+1;}
+size_t Parent(size_t i) {return i/2;}
+size_t LeftChild(size_t i) {return 2*i;}
+size_t RightChild(size_t i) {return 2*i+1;}
 
 // An arbitrary associative operator on elements
 int glue(int a, int b) {
@@ -36,18 +36,18 @@ int glue(int a, int b) {
 /**** STRUCT DEFINITION ****/
 typedef struct SegTree {
     int identity;
-    int n;
-    int N;
+    size_t n;
+    size_t N;
     int *A;
 } SegTree;
 
 /******************** INTERFACE FUNCTIONS BEGIN ********************/
 
-void SegTreeInit(SegTree *s, int n) {
+void SegTreeInit(SegTree *s, size_t n) {
     s->n = n;
     s->N = SuperCeiling(n);
     s->A = (int *) malloc (sizeof(int) * (2*s->N));
-    for (int i = 0; i < 2* s->N; i++) s->A[i] = 0;
+    for (size_t i = 0; i < 2* s->N; i++) s->A[i] = 0;
 }
 
 void SegTreeDestroy(SegTree *s) {
@@ -58,7 +58,7 @@ void SegTreeDestroy(SegTree *s) {
 // Assigns value x to index i in the array A, and also recomputes
 // every other value in the path up to the root from index i by 
 // adding together the values of the two children below it.
-void Assign(SegTree *s, int i, int x) {
+void Assign(SegTree *s, size_t i, int x) {
     i = i+s->N;
     s->A[i] = x;
     for (i = Parent(i); i>0; i = Parent(i)) {
@@ -67,12 +67,12 @@ void Assign(SegTree *s, int i, int x) {
 }
 
 void printA(SegTree *s) {
-    for (int i = 0; i < 2 * s->N; i++) {
+    for (size_t i = 0; i < 2 * s->N; i++) {
         printf("A[%d] = %d\n", i, s->A[i]);
     }
 }
 
-int f (SegTree *s, int v, int l, int r, int i, int j) {
+int f (SegTree *s, size_t v, size_t l, size_t r, size_t i, size_t j) {
 /* We’re currently at A[v]. 1 <= v < 2*N.
     The range [l,r] is that of the current block, wrt user variables [0,n-1].
     The range [i,j] is the range of the query, wrt user variables [0,n-1].
@@ -80,7 +80,8 @@ int f (SegTree *s, int v, int l, int r, int i, int j) {
     The range [l,r] contains the range [i,j].
     This function returns the answer to the query.
 */
-    int t1, t2, m;
+    size_t m;
+    int t1, t2;
     if (l==i && r==j) {
         return s->A[v];
     } else {
@@ -93,14 +94,13 @@ int f (SegTree *s, int v, int l, int r, int i, int j) {
 
 // Finds sum_{i <= k <= j} A[k]
 // More information in function f's documentation.
-int RangeSum(SegTree *s, int i, int j) {
+int RangeSum(SegTree *s, size_t i, size_t j) {
     return f (s, 1, 0, (s->N-1), i, j);
 }
 
 /******************** INTERFACE FUNCTIONS END ********************/
 
 int main(){
-    int i;
     SegTree s;
     SegTreeInit(&s, 7);
     Assign(&s, 3, 7);

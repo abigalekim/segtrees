@@ -14,7 +14,7 @@ using namespace std;
 class Segtree {
     public:
         // Constructor for segtrees.
-        Segtree(int size) {
+        Segtree(size_t size) {
             n = size;
             N = SuperCeiling(size);
             A.resize(2 * N, identity);
@@ -24,51 +24,51 @@ class Segtree {
         // Assigns value x to index i in the array A, and also recomputes
         // every other value in the path up to the root from index i by 
         // adding together the values of the two children below it.
-        void Assign(int i, int x) {
+        void Assign(size_t i, int x) {
             i = i+N;
             A[i] = x;
-            for (i = Parent(i); i>0; i = Parent(i)) {
+            for (i = Parent(i); i>0UL; i = Parent(i)) {
                 A[i] = glue (A[LeftChild(i)], A[RightChild(i)]);
             }
         }
 
         // Finds sum_{i <= k <= j} A[k]
         // More information in function f's documentation.
-        int RangeSum(int i, int j) {
-            return f (1, 0, (N-1), i, j);
+        int RangeSum(size_t i, size_t j) {
+            return f (1UL, 0UL, (N-1), i, j);
         }
 
         // Prints the contents of the array A
         void printA() {
-            for (int i=0; i < 2*N; i++) {
+            for (size_t i=0; i < 2*N; i++) {
                 cout << "A[" << i << "] = " << A[i] << endl;
             }
         }
 
     private:
-        int n;
-        int N;
+        size_t n;
+        size_t N;
         vector<int> A;
         int identity = 0;
 
         // Returns smallest power of 2 greater than equal to n
-        int SuperCeiling(int n) {
-            int p;
+        size_t SuperCeiling(size_t n) {
+            size_t p;
             for (p=1; p < n; p = p << 1);
             return p;
         }
 
         // Tree index functions
-        int Parent(int i) {return i/2;}
-        int LeftChild(int i) {return 2*i;}
-        int RightChild(int i) {return 2*i+1;}
+        size_t Parent(size_t i) {return i/2;}
+        size_t LeftChild(size_t i) {return 2*i;}
+        size_t RightChild(size_t i) {return 2*i+1;}
 
         // Function that glues associative operator on elements
         int glue(int a, int b) {
             return a+b;
         }
 
-        int f (int v, int l, int r, int i, int j) {
+        int f (size_t v, size_t l, size_t r, size_t i, size_t j) {
         /*  We’re currently at A[v]. 1 <= v < 2*N.
             The range [l,r] is that of the current block, wrt user variables [0,n-1].
             The range [i,j] is the range of the query, wrt user variables [0,n-1].
@@ -76,7 +76,8 @@ class Segtree {
             The range [l,r] contains the range [i,j].
             This function returns the answer to the query.
         */
-            int t1, t2, m;
+            int t1, t2;
+            size_t m;
             if (l==i && r==j) {
                 return A[v];
             } else {
