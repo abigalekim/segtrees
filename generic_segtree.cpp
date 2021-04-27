@@ -1,4 +1,4 @@
-/** @file segtree.cpp
+/** @file generic_segtree.cpp
  *  @author Danny Sleator, translated by Abi Kim (abigalek)
  *  @brief Segment tree implementation in C++. 
  *  This implementation supports generics for the data being
@@ -90,12 +90,8 @@ class Segtree {
         }
 };
 
-int add(int a, int b) {
-    return a + b;
-}
-
 int main() {
-    Segtree<int> s(7, add);
+    Segtree<int> s(7, plus<int>());
     s.Assign(3,7);
     s.Assign(4,1);
 
