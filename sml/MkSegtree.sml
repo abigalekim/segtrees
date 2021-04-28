@@ -32,6 +32,8 @@ signature MONOID = sig
     val combine : t * t -> t
     (* A left and right identity for 'combine' *)
     val identity : t 
+
+    val toString : t -> string 
 end 
 
 signature SEGTREE = sig 
@@ -52,7 +54,16 @@ signature SEGTREE = sig
      * Finds the range sum of [start, finish]
      * Note that the range is inclusive! *)
     val rangeSum : t * int * int -> Monoid.t 
+
+    (* (Inefficiently) constructs a segtree from an initial list *)
+    val fromList : Monoid.t list -> t 
+
+    (* Converts just the "user elements" to a string
+     * formatted as a list *)
+    val toString : t -> string 
 end 
+
+fun assert e msg = if e then () else raise Fail msg
 
 functor MkSegtree(structure Monoid: MONOID 
                   structure Sequence: SEQUENCE) 
@@ -61,8 +72,6 @@ struct
     structure Monoid = Monoid
 
     type t = Monoid.t Sequence.t * int
-
-    fun assert e msg = if e then () else raise Fail msg
 
     fun parent i = i div 2
     fun leftChild i = 2 * i 
@@ -81,9 +90,9 @@ struct
     fun empty n = 
     let 
         val () = assert (n > 0) ("Length too small: " ^ Int.toString n)
-        val realLength = nextPowerOfTwo n
+        val n = nextPowerOfTwo n
     in 
-        (Sequence.tabulate (2 * realLength, fn _ => Monoid.identity), n)
+        (Sequence.tabulate (2 * n, fn _ => Monoid.identity), n)
     end 
 
     fun update ((T, n), i, x) = 
@@ -92,15 +101,15 @@ struct
         val T = Sequence.update (T, idx, x)
 
         fun updateParents T = fn 
-            0 => T 
+               0 => T 
             | idx => 
-            let 
-                val left = Sequence.sub (T, leftChild idx)
-                val right = Sequence.sub (T, rightChild idx)
-                val v = Monoid.combine (left, right)
-            in
-                updateParents (Sequence.update (T, idx, v)) (parent idx)
-            end 
+                let 
+                    val left = Sequence.sub (T, leftChild idx)
+                    val right = Sequence.sub (T, rightChild idx)
+                    val v = Monoid.combine (left, right)
+                in
+                    updateParents (Sequence.update (T, idx, v)) (parent idx)
+                end 
     in
         (updateParents T (parent idx), n)
     end 
@@ -132,17 +141,49 @@ struct
     in 
         f (1, 0, n - 1, start, finish)
     end 
+
+    fun fromList L = 
+    let 
+        val n = List.length L 
+        val S = empty n 
+    in
+        List.foldli (fn (idx, elem, T) => update (T, idx, elem)) S L
+    end 
+
+    fun toString (T, n) = 
+    let 
+        val elems = List.map Monoid.toString (List.tabulate (n, fn i => Sequence.sub (T, n + i)))
+    in
+        String.concat ["[", String.concatWith ", " elems, "]"]
+    end 
 end 
 
 structure IntMonoid = struct 
     type t = int 
     val combine = op+
     val identity = 0
+    val toString = Int.toString
 end 
 
 structure IntSegtree = MkSegtree(structure Monoid = IntMonoid 
                                  structure Sequence = ImmutableSequence)
 
-val s = IntSegtree.empty 7 
-val s = IntSegtree.update (s, 3, 7)
-val s = IntSegtree.update (s, 4, 1)
+(* Tests for immutable 😋 *)
+val s = IntSegtree.fromList [5, 0, ~1, 7, 1, 0, 12]
+
+val () = assert (IntSegtree.rangeSum (s, 0, 6) = 5+1+7-1+12) "Whole range"
+val () = assert (IntSegtree.rangeSum (s, 3, 3) = 7) "Single elem"
+val () = assert (IntSegtree.rangeSum (s, 2, 4) = 7) "Smaller range"
+val () = print (IntSegtree.toString s ^ "\n")
+
+(* Tests for mutable 🤢 *)
+structure IntSegtree = MkSegtree(structure Monoid = IntMonoid 
+                                 structure Sequence = MutableSequence)
+
+(* Tests *)
+val s = IntSegtree.fromList [5, 0, ~1, 7, 1, 0, 12]
+
+val () = assert (IntSegtree.rangeSum (s, 0, 6) = 5+1+7-1+12) "Whole range"
+val () = assert (IntSegtree.rangeSum (s, 3, 3) = 7) "Single elem"
+val () = assert (IntSegtree.rangeSum (s, 2, 4) = 7) "Smaller range"
+val () = print (IntSegtree.toString s ^ "\n")
