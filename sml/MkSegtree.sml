@@ -1,5 +1,5 @@
 (* SML Segtree implementation
- * Ishan Bhargava <ibhargav@andrew.cmu.edu
+ * Ishan Bhargava <ibhargav@andrew.cmu.edu>
  *
  * Segtree parameterized by monoid and 
  * choice of storage.
