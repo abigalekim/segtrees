@@ -34,7 +34,7 @@ int glue(int a, int b) {
 }
 
 /**** STRUCT DEFINITION ****/
-typedef struct SegTree {
+typedef struct SegTree { 
     int identity;
     size_t n;
     size_t N;
@@ -48,9 +48,10 @@ void SegTreeInit(SegTree *s, size_t n) {
     s->N = SuperCeiling(n);
     s->A = (int *) malloc (sizeof(int) * (2*s->N));
     for (size_t i = 0; i < 2* s->N; i++) s->A[i] = 0;
+    s->identity = 0;
 }
 
-void SegTreeDestroy(SegTree *s) {
+void SegTreeDestroy(SegTree *s) { 
     free(s->A);
 }
 
@@ -68,7 +69,7 @@ void Assign(SegTree *s, size_t i, int x) {
 
 void printA(SegTree *s) {
     for (size_t i = 0; i < 2 * s->N; i++) {
-        printf("A[%d] = %d\n", i, s->A[i]);
+        printf("A[%zu] = %d\n", i, s->A[i]);
     }
 }
 
@@ -85,7 +86,7 @@ int f (SegTree *s, size_t v, size_t l, size_t r, size_t i, size_t j) {
     if (l==i && r==j) {
         return s->A[v];
     } else {
-        m = (l+r)/2; /* split [l,r] into [l,m] [m+1,r] */
+        m = (l+r)/2; /* split [l,r] into [l,m] [m+1f,r] */
         t1 = (i <= m)? f (s, LeftChild(v), l, m, i, (min(m,j))): s->identity;
         t2 = (j > m)? f (s, RightChild(v), (m+1), r, (max(i,(m+1))), j): s->identity;
         return glue (t1, t2);
@@ -107,7 +108,6 @@ int main(){
     Assign(&s, 4, 1);
 
     printA(&s);
-    
     printf(" RangeSum(2,7) = %d\n", RangeSum(&s, 2, 7));
     printf(" RangeSum(0,3) = %d\n", RangeSum(&s, 0, 3));
     printf(" RangeSum(4,5) = %d\n", RangeSum(&s, 4, 5));
