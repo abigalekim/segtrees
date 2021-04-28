@@ -52,7 +52,7 @@ where
         let j = match range.end_bound() {
             Bound::Included(&j) => j,
             Bound::Excluded(&j) => j - 1,
-            Bound::Unbounded => self.arr.len() - 1,
+            Bound::Unbounded => self.n - 1,
         };
 
         self.f(1, 0, self.n - 1, i, j)
