@@ -167,6 +167,9 @@ struct
     let 
         val n = List.length L 
         val T = empty n 
+
+        (* List.foldli doesn't seem available in MLTon 
+         * so we rewrite it here *)
         fun insert T i = fn
             [] => T 
           | x::xs => insert (update (T, i, x)) (i + 1) xs 
@@ -176,11 +179,13 @@ struct
 
     fun toString (T, n) = 
     let 
-        val elems = List.map Monoid.toString (List.tabulate (n, fn i => Sequence.sub (T, n + i)))
+        val elems = List.tabulate (n, fn i => Monoid.toString (Sequence.sub (T, n + i)))
     in
         String.concat ["[", String.concatWith ", " elems, "]"]
     end 
 end 
+
+(* Test cases follow *)
 
 structure IntMonoid = struct 
     type t = int 
@@ -198,7 +203,7 @@ val s = IntSegtree.fromList [5, 0, ~1, 7, 1, 0, 12]
 val () = assert (IntSegtree.rangeSum (s, 0, 6) = 5+1+7-1+12) "Whole range"
 val () = assert (IntSegtree.rangeSum (s, 3, 3) = 7) "Single elem"
 val () = assert (IntSegtree.rangeSum (s, 2, 4) = 7) "Smaller range"
-val () = print (IntSegtree.toString s ^ "\n")
+val () = println (IntSegtree.toString s)
 
 (* Tests for mutable 🤢 *)
 structure IntSegtree = MkSegtree(structure Monoid = IntMonoid 
