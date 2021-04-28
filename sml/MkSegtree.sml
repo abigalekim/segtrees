@@ -1,13 +1,29 @@
+(* SML Segtree implementation
+ * Ishan Bhargava <ibhargav@andrew.cmu.edu
+ *
+ * Segtree parameterized by monoid and 
+ * choice of storage.
+ * 
+ * See the bottom for examples
+ *)
+
 (* Allows you to choose between a mutable segtree
  * and an immutable one :) *)
 signature SEQUENCE = sig 
     type 'a t 
 
+    (* How to create this kind of sequence *)
     val tabulate : int * (int -> 'a) -> 'a t 
+    (* How to access an element *)
     val sub : 'a t * int -> 'a 
+    (* How to update an element.
+     * This function should return the new sequence,
+     * which might be the same one as before 
+     * if its mutable *)
     val update : 'a t * int * 'a -> 'a t 
 end 
 
+(* Sequences backed by mutable Arrays *)
 structure MutableSequence : SEQUENCE = struct 
     type 'a t = 'a Array.array 
 
@@ -16,6 +32,7 @@ structure MutableSequence : SEQUENCE = struct
     fun update (A, i, x) = A before Array.update (A, i, x) 
 end 
 
+(* Sequences backed by immutable Vectors *)
 structure ImmutableSequence : SEQUENCE = struct 
     type 'a t = 'a Vector.vector
 
@@ -24,6 +41,7 @@ structure ImmutableSequence : SEQUENCE = struct
     val update = Vector.update 
 end 
 
+(* A combination of an associative function + identity *)
 signature MONOID = sig 
     (* Element type *)
     type t
@@ -37,13 +55,18 @@ signature MONOID = sig
 end 
 
 signature SEGTREE = sig 
+    (* Element type *)
     structure Monoid : MONOID
 
+    (* The segtree type *)
     type t 
 
     (* Creates a segtree of the given size
      * with all elements being the identity *)
     val empty : int -> t 
+
+    (* (Inefficiently) constructs a segtree from an initial list *)
+    val fromList : Monoid.t list -> t 
 
     (* Updates at the given index.
      * If the underlying storage is mutable,
@@ -55,15 +78,13 @@ signature SEGTREE = sig
      * Note that the range is inclusive! *)
     val rangeSum : t * int * int -> Monoid.t 
 
-    (* (Inefficiently) constructs a segtree from an initial list *)
-    val fromList : Monoid.t list -> t 
-
     (* Converts just the "user elements" to a string
      * formatted as a list *)
     val toString : t -> string 
 end 
 
 fun assert e msg = if e then () else raise Fail msg
+fun println msg = (print msg; print "\n")
 
 functor MkSegtree(structure Monoid: MONOID 
                   structure Sequence: SEQUENCE) 
@@ -145,9 +166,12 @@ struct
     fun fromList L = 
     let 
         val n = List.length L 
-        val S = empty n 
+        val T = empty n 
+        fun insert T i = fn
+            [] => T 
+          | x::xs => insert (update (T, i, x)) (i + 1) xs 
     in
-        List.foldli (fn (idx, elem, T) => update (T, idx, elem)) S L
+        insert T 0 L
     end 
 
     fun toString (T, n) = 
@@ -186,4 +210,20 @@ val s = IntSegtree.fromList [5, 0, ~1, 7, 1, 0, 12]
 val () = assert (IntSegtree.rangeSum (s, 0, 6) = 5+1+7-1+12) "Whole range"
 val () = assert (IntSegtree.rangeSum (s, 3, 3) = 7) "Single elem"
 val () = assert (IntSegtree.rangeSum (s, 2, 4) = 7) "Smaller range"
-val () = print (IntSegtree.toString s ^ "\n")
+val () = println (IntSegtree.toString s)
+
+structure StringMonoid = struct 
+    type t = string 
+    val combine = op^
+    val identity = ""
+    fun toString s = s
+end 
+
+structure StringSegtree = MkSegtree(structure Monoid = StringMonoid
+                                    structure Sequence = MutableSequence)
+
+val t = StringSegtree.fromList ["hello ", "world ", "testing ", "the ", "segtree"]
+val () = (
+    println (StringSegtree.rangeSum (t, 0, 3));
+    println (StringSegtree.rangeSum (t, 2, 4))
+)
