@@ -82,8 +82,8 @@ class Segtree {
                 return A[v];
             } else {
                 m = (l+r)/2; // split [l,r] into [l,m] [m+1,r]
-                t1 = (i <= m)? f (LeftChild(v), l, m, i, (min(m,j))): identity;
-                t2 = (j > m)? f (RightChild(v), (m+1), r, (max(i,(m+1))), j): identity;
+                t1 = (i <= m) ? f (LeftChild(v), l, m, i, (min(m,j))): identity;
+                t2 = (j > m) ? f (RightChild(v), (m+1), r, (max(i,(m+1))), j): identity;
                 return glue (t1, t2);
             }
         }
