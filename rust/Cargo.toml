@@ -1,0 +1,9 @@
+[package]
+name = "segtree"
+version = "0.1.0"
+# Translated from code by Danny Sleator
+authors = ["Abi Kim <abigalek@andrew.cmu.edu>", "Cooper Pierce <cppierce@andrew.cmu.edu"]
+edition = "2018"
+license = "Unlicense"
+
+[dependencies]
