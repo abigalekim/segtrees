@@ -89,8 +89,7 @@ class SegTree<T> {
 
 public class GenericSegTreeImpl {
     public static void main(String[] args) {
-        BinaryOperator<Integer> add = (a, b) -> a + b;
-        SegTree<Integer> s = new SegTree<Integer>(7, 0, add);
+        SegTree<Integer> s = new SegTree<Integer>(7, 0, Integer::sum);
         s.Assign(3,7);
         s.Assign(4,1);
 
