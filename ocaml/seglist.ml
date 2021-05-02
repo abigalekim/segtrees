@@ -156,7 +156,6 @@ end
                                 (isum' arr ((i+1)/2) ((j-1)/2) (offset/2)) )
       in
     fun i j (size, arr) ->
-      assert (0 <= i  && i < j && j < size);
       isum' arr i (j-1) size
 end
 
@@ -168,10 +167,10 @@ let () =
   let size = 4000 in
   let arr = Array.init size (fun _ -> 1) in
   print_endline ("ready...") ;
-  let list = Mutable.make arr in
+  let list = Immutable.make arr in
   print_endline ("start!") ;
   for i = 0 to size-1 do
     for j = i+1 to size do
-      let _ = Mutable.interval_sum i j list in ()
+      let _ = Immutable.interval_sum i j list in ()
     done
   done
