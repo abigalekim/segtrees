@@ -6,3 +6,4 @@ List of Contributors:
 - Cooper Pierce (cppierce@andrew.cmu.edu)
 - Peiqi Liu (peiqil@andrew.cmu.edu)
 - Ishan Bhargava (ibhargav@andrew.cmu.edu)
+- James Gallichio (jgallicc@andrew.cmu.edu)
