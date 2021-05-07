@@ -60,10 +60,10 @@ module Seglist (M : Monoid)
           let left_size = tree_size left in
           if i < left_size then
             let left' = update' i newval left in
-            Node{left = left'; right; size; acc = M.reduce (tree_sum left) (tree_sum right)}
+            Node{left = left'; right; size; acc = M.reduce (tree_sum left') (tree_sum right)}
           else
             let right' = update' i newval right in
-            Node{left; right = right'; size; acc = M.reduce (tree_sum left) (tree_sum right)}
+            Node{left; right = right'; size; acc = M.reduce (tree_sum left) (tree_sum right')}
       in
     fun i newval list ->
     match list with
