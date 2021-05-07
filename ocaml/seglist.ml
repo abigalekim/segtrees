@@ -53,20 +53,23 @@ module Seglist (M : Monoid)
 
   (* Assumes 0 <= i && i < size *)
   let update =
-    let rec update' i newval = fun tree ->
+    let rec update' i newval tree =
       match tree with
       | Leaf _ -> Leaf newval
-      | Node{left;right;size;acc} ->
-          let left_size = tree_size left in
-          if i < left_size then
-            Node{left = update' i newval left; right; size; acc}
-          else
-            Node{left; right = update' (i-left_size) newval right; size; acc}
-      in
+      | Node { left; right; size; acc } ->
+        let left_size = tree_size left in
+        let left, right =
+          if i < left_size
+          then update' i newval left, right
+          else left, update' (i - left_size) newval right
+        in
+        Node { left; right; size; acc = M.reduce (tree_sum left) (tree_sum right) }
+    in
     fun i newval list ->
-    match list with
-    | Empty -> raise (Failure "Empty seglist cannot be updated")
-    | Tree tree -> Tree (update' i newval tree)
+      match list with
+      | Empty -> raise (Failure "Empty seglist cannot be updated")
+      | Tree tree -> Tree (update' i newval tree)
+  ;;
 
   let rec isum_tree i j = function
     | Leaf x -> x (* --> i=0, j=1 *)
