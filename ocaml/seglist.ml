@@ -59,9 +59,11 @@ module Seglist (M : Monoid)
       | Node{left;right;size;acc} ->
           let left_size = tree_size left in
           if i < left_size then
-            Node{left = update' i newval left; right; size; acc}
+            let left' = update' i newval left in
+            Node{left = left'; right; size; acc = M.reduce (tree_sum left) (tree_sum right)}
           else
-            Node{left; right = update' (i-left_size) newval right; size; acc}
+            let right' = update' i newval right in
+            Node{left; right = right'; size; acc = M.reduce (tree_sum left) (tree_sum right)}
       in
     fun i newval list ->
     match list with
@@ -160,17 +162,12 @@ end
 end
 
 module Immutable = Seglist (IntPlus)
-module Mutable = SeglistMutable (IntPlus)
 
 (* Some testing! *)
 let () =
-  let size = 4000 in
+  let size = 5 in
   let arr = Array.init size (fun _ -> 1) in
-  print_endline ("ready...") ;
   let list = Immutable.make arr in
-  print_endline ("start!") ;
-  for i = 0 to size-1 do
-    for j = i+1 to size do
-      let _ = Immutable.interval_sum i j list in ()
-    done
-  done
+  print_endline(string_of_int (Immutable.interval_sum 0 5 list));
+  let list' = Immutable.update 0 2 list in
+  print_endline(string_of_int (Immutable.interval_sum 0 5 list'))
