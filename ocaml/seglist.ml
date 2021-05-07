@@ -22,80 +22,80 @@ module Seglist (M : Monoid)
  : sig
    type t
    val make : M.t array -> t
+   val length : t -> int
+   val update_in_place : (M.t -> M.t) -> int -> t -> t
    val update : int -> M.t -> t -> t
+   val total_sum : t -> M.t
    val interval_sum : int -> int -> t -> M.t
  end
  = struct
   type elem = M.t
   type tree = Leaf of elem | Node of {left : tree; right : tree; acc : elem; size : int}
 
-  let tree_sum = function
+  let total_sum = function
   | Leaf x -> x
   | Node{acc} -> acc
 
-  let tree_size = function
+  let length = function
   | Leaf _ -> 1
   | Node{size} -> size
 
-  type t = Empty | Tree of tree
+  type t = tree
 
   let make elems =
-    if (Array.length elems) = 0 then Empty else
+    if (Array.length elems) = 0 then raise (Failure "Empty seglist not supported") else
     (* Build tree for range [i,j) *)
     let rec build i j =
       if i+1 = j then Leaf (elems.(i)) else
       let mid = (i+j)/2 in
       let left = build i mid in
       let right = build mid j in
-      Node {left; right; size = j-i; acc = M.reduce (tree_sum left) (tree_sum right)}
+      Node {left; right; size = j-i; acc = M.reduce (total_sum left) (total_sum right)}
     in
-    Tree (build 0 (Array.length elems))
+    build 0 (Array.length elems)
 
-  (* Assumes 0 <= i && i < size *)
-  let update =
-    let rec update' i newval = fun tree ->
-      match tree with
-      | Leaf _ -> Leaf newval
-      | Node{left;right;size;acc} ->
-          let left_size = tree_size left in
-          if i < left_size then
-            let left' = update' i newval left in
-            Node{left = left'; right; size; acc = M.reduce (tree_sum left') (tree_sum right)}
-          else
-            let right' = update' i newval right in
-            Node{left; right = right'; size; acc = M.reduce (tree_sum left) (tree_sum right')}
-      in
-    fun i newval list ->
-    match list with
-    | Empty -> raise (Failure "Empty seglist cannot be updated")
-    | Tree tree -> Tree (update' i newval tree)
+  let update_in_place f =
+    let rec update' i = function
+    | Leaf old -> Leaf (f old)
+    | Node{left;right;size;acc} ->
+        let left_size = length left in
+        if i < left_size then
+          let left' = update' i left in
+          Node{left = left'; right; size; acc = M.reduce (total_sum left') (total_sum right)}
+        else
+          let right' = update' (i-left_size) right in
+          Node{left; right = right'; size; acc = M.reduce (total_sum left) (total_sum right')}
+    in
+  fun i tree ->
+    update' i tree
 
-  let rec isum_tree i j = function
-    | Leaf x -> x (* --> i=0, j=1 *)
-    | Node {left; right; size; acc} ->
-        (* Short circuit if interval is entire subtree *)
-        if i = 0 && j = size then acc else
-        let left_size = tree_size left in
-        if j <= left_size then (* Entire interval on left *)
-          isum_tree i j left
-        else if 0 <= i-left_size then (* Entire interval on right *)
-          isum_tree (i-left_size) (j-left_size) right
-        else (* Interval split across both sides *)
-          M.reduce (isum_tree i left_size left) (isum_tree 0 (j-left_size) right)
+  let update i newval tree = update_in_place (fun _ -> newval) i tree
 
-  (* Sum over range [i,j). Assumes 0 <= i < j <= size *)
-  let interval_sum i j = function
-    | Empty ->
-        M.identity
-    | Tree tree ->
-        isum_tree i j tree
+  let interval_sum =
+    let rec isum_tree i j = function
+      | Leaf x -> assert (i = 0 && j = 1) ; x
+      | Node {left; right; size; acc} ->
+          (* Short circuit if interval is entire subtree *)
+          if i = 0 && j = size then acc else
+          let left_size = length left in
+          if j <= left_size then (* Entire interval on left *)
+            isum_tree i j left
+          else if 0 <= i-left_size then (* Entire interval on right *)
+            isum_tree (i-left_size) (j-left_size) right
+          else (* Interval split across both sides *)
+            M.reduce (isum_tree i left_size left) (isum_tree 0 (j-left_size) right)
+    in fun i j tree ->
+      assert (0 <= i && i < j && j <= length tree);
+      isum_tree i j tree
 end
 
 module SeglistMutable (M : Monoid)
 : sig
   type t
   val make : M.t array -> t
+  val update_in_place : (M.t -> M.t) -> int -> t -> unit
   val update : int -> M.t -> t -> unit
+  val total_sum : t -> M.t
   val interval_sum : int -> int -> t -> M.t
 end
  = struct
@@ -126,17 +126,22 @@ end
     in
     init 1 ; (pow2_size,arr)
 
-  let update =
-    (* Traverse up tree, updating i and its ancestors *)
-    let rec update' i arr =
-      if i >= 1 then (
-        arr.(i) <- M.reduce (arr.(lchild i)) (arr.(rchild i));
-        update' (parent i) arr
-      )
-    in
-    fun idx newval (size,arr) ->
-      arr.(idx+size) <- newval;
-      update' (parent (idx+size)) arr
+  (* Traverse up tree, updating i and its ancestors *)
+  let rec update_ancestors i arr =
+    if i >= 1 then (
+      arr.(i) <- M.reduce (arr.(lchild i)) (arr.(rchild i));
+      update_ancestors (parent i) arr
+    )
+
+  let update_in_place f idx (size,arr) =
+    arr.(idx+size) <- f (arr.(idx+size));
+    update_ancestors (parent (idx+size)) arr
+
+  let update idx newval (size,arr) =
+    arr.(idx+size) <- newval;
+    update_ancestors (parent (idx+size)) arr
+
+  let total_sum (size,arr) = arr.(1)
 
   (* Sum over range [i,j) *)
   let interval_sum =
